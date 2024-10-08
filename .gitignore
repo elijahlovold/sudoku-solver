@@ -1,0 +1,8 @@
+*.exe
+
+.cache/
+
+test.*
+test/
+lib/
+build/
