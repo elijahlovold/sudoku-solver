@@ -16,14 +16,10 @@ int main(int argc, char** argv) {
     grid_manager* grid = create_grid(size_N);
 
     input_grid(grid);
+
+    solve_grid(grid);
+
     display_grid(grid);
-
-    printf("number remaining: %d", compute_missing_numbers(grid));
-
-
-
-
-
 
     destroy_grid(grid);
 }

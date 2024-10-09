@@ -18,7 +18,7 @@ point* create_point() {
     }
 
     // Initialize array elements to zero
-    reset_possible_values(pt);
+    reset_possible_values(pt, 1);
     return pt;
 }
 
@@ -30,9 +30,14 @@ void destroy_point(point* pt) {
     }
 }
 
-void reset_possible_values(point* pt) {
+void reset_possible_values(point* pt, int value) {
     for (int i = 0; i < size_N; i++) {
-        pt->possible_values[i] = i;
+        pt->possible_values[i] = value;
+    }
+    if (value == 1) {
+        pt->num_possible = size_N;
+    } else {
+        pt->num_possible = 0;
     }
 };
 
@@ -74,6 +79,7 @@ grid_manager* create_grid(int size) {
         }
     } 
 
+    grid->iteration = 0;
     return grid;
 } 
 
@@ -101,6 +107,10 @@ void input_grid(grid_manager* grid) {
                 grid->points[i][j]->value = -1;
             } else {
                 int value = atoi(values);
+                if (value > size_N || value < 1) {
+                    printf("error, %d is invalid. Must be between -1 and %d", value, size_N); 
+                    return;
+                }
                 grid->points[i][j]->value = value;
             }
         }
@@ -135,6 +145,91 @@ int compute_missing_numbers(grid_manager* grid) {
     grid->missing_numbers = num;
     return num;
 };
-void iterate_grid(grid_manager* grid);
+
+int compute_all_possible_points(grid_manager* grid) {
+    int num_updated = 0;
+    for (int i = 0; i < size_N; i++) {
+        for (int j = 0; j < size_N; j++) {
+            num_updated += compute_possible_point(grid, i, j);
+        }
+    }
+    return num_updated;
+}
+
+int compute_possible_point(grid_manager* grid, int x, int y) {
+    // if not -1, point is already found!
+    if (grid->points[x][y]->value != -1) {
+        grid->points[x][y]->num_possible = 1;
+        return 0;
+    }
+
+    int num_possible = size_N;
+    for (int i = 0; i < size_N; i++) {
+        if (i != x) {
+            int value = grid->points[i][y]->value;
+            if (value != -1 && grid->points[x][y]->possible_values[value - 1] != 0) {
+                // remove this point by setting to 0 
+                grid->points[x][y]->possible_values[value - 1] = 0;
+                num_possible--;
+            }
+        }
+        if (i != y) {
+            int value = grid->points[x][i]->value;
+            if (value != -1 && grid->points[x][y]->possible_values[value - 1] != 0) {
+                // remove this point by setting to 0 
+                grid->points[x][y]->possible_values[value - 1] = 0;
+                num_possible--;
+            }
+        }
+    }
+
+    grid->points[x][y]->num_possible = num_possible;
+    if (num_possible == 1) {
+        for (int i = 0; i < size_N; i++) {
+            int value = grid->points[x][y]->possible_values[i];
+            if (value == 1) {
+                grid->points[x][y]->value = i + 1;
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
+void print_possible_points(point* pt) {
+    printf("Possible numbers: ");
+
+    int printed = 0;
+    for (int i = 0; i < size_N; i++) {
+        if (pt->possible_values[i] == 1) {
+            printf("%d, ", i + 1);
+            printed = 1;
+
+        }
+    }
+    if (printed == 0) {
+        printf("None");
+    }
+    printf("\n");
+}
+
+int iterate_grid(grid_manager* grid) {
+    printf("iter: %d\n", grid->iteration);
+
+    int num_direct_infer = compute_all_possible_points(grid);
+    grid->iteration++;
+
+    return num_direct_infer;
+}
+
 int test_point(grid_manager* grid, int x, int y, int value);
 
+int solve_grid(grid_manager* grid) {
+    int num_changed;
+    do {
+        num_changed = iterate_grid(grid);
+    } while(num_changed != 0);
+
+    // only win if there are no more
+    return compute_missing_numbers(grid) == 0;
+}
