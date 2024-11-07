@@ -5,7 +5,7 @@ int size_N;
 point* create_point() {
     point* pt = (point*)malloc(sizeof(point));
     if (pt == NULL) {
-        perror("Failed to allocate memory for point");
+        perror("Failed to allocate memory for point\n");
         return NULL; // Handle allocation failure
     }
 
@@ -13,7 +13,7 @@ point* create_point() {
     pt->possible_values = (int *)malloc(size_N * sizeof(int));
     if (pt->possible_values == NULL) {
         free(pt->possible_values); // Clean up previously allocated memory
-        perror("Failed to allocate memory for data");
+        perror("Failed to allocate memory for data\n");
         return NULL; // Handle allocation failure
     }
 
@@ -43,15 +43,22 @@ void reset_possible_values(point* pt, int value) {
 
 grid_manager* create_grid(int size) {
     if (size < 2) {
-        printf("Error, size cannot be less than two");
-        printf("Using default value of %d", DEFAULT_SIZE);
+        printf("Error, size cannot be less than two\n");
+        printf("Using default value of %d\n", DEFAULT_SIZE);
         size_N = DEFAULT_SIZE;
+    }
+
+    double root = sqrt((double)size);
+    if (root * root != size) {
+        printf("Error, size must be perfect root: %d\n", size);
+        return NULL;
     }
     size_N = size;
 
+    printf("creating grid size: %d\n", size_N);
     grid_manager* grid = (grid_manager*)malloc(sizeof(grid_manager));
     if (grid == NULL) {
-        perror("Failed to allocate memory for point");
+        perror("Failed to allocate memory for point\n");
         return NULL; // Handle allocation failure
     }
 
@@ -62,7 +69,7 @@ grid_manager* create_grid(int size) {
     grid->points = (point***)malloc(size_N * sizeof(point**));
     if (grid->points == NULL) {
         free(grid->points); // Clean up previously allocated memory
-        perror("Failed to allocate memory for points on grid");
+        perror("Failed to allocate memory for points on grid\n");
         return NULL; // Handle allocation failure
     }
 
@@ -70,7 +77,7 @@ grid_manager* create_grid(int size) {
         grid->points[i] = (point**)malloc(size_N * sizeof(point*));
         if (grid->points[i] == NULL) {
             free(grid->points[i]); // Clean up previously allocated memory
-            perror("Failed to allocate memory for points on grid");
+            perror("Failed to allocate memory for points on grid\n");
             return NULL; // Handle allocation failure
         }
 
@@ -83,8 +90,61 @@ grid_manager* create_grid(int size) {
     return grid;
 } 
 
+grid_manager* read_grid_from_file(char* filename) {
+    FILE *file = fopen(filename, "r"); // Open file in read mode
+                                                //
+    if (file == NULL) {                      // Check if file opened successfully
+        perror("Error opening file");
+        return NULL;
+    }
+
+    int size_N = fgetc(file) - '0';
+    grid_manager* grid = create_grid(size_N);
+    if (grid == NULL) {
+        return NULL;
+    }
+
+    char ch;
+    int i = 0, j = 0;
+    while ((ch = fgetc(file)) != EOF) {
+        int iter = 0;
+        if (ch == EMPTY_ENTRY || ch == '_') {
+            grid->points[i][j]->value = -1;
+            iter = 1;
+        } else if (isdigit(ch)) {
+            int num = ch - '0';
+            if (num > size_N || num < 1) {
+                printf("error, %d is invalid. Must be between -1 and %d", num, size_N); 
+                return NULL;
+            }
+            grid->points[i][j]->value = num;
+            iter = 1;
+        }
+
+        if (iter) {
+            i++;
+            if (i >= size_N) {
+                i = 0;
+                j++;
+            }
+            if (j >= size_N) {
+                break;
+            }
+        }
+    }
+
+    fclose(file); // Close file
+
+    printf("grid read successfully\n\n");
+    display_grid(grid);
+    return grid;
+}
 
 void destroy_grid(grid_manager* grid) {
+    if (grid == NULL) {
+        return;
+    }
+
     for (int i = 0; i < size_N; i++) {
         for (int j = 0; j < size_N; j++) {
             destroy_point(grid->points[i][j]);
@@ -108,7 +168,7 @@ void input_grid(grid_manager* grid) {
             } else {
                 int value = atoi(values);
                 if (value > size_N || value < 1) {
-                    printf("error, %d is invalid. Must be between -1 and %d", value, size_N); 
+                    printf("error, %d is invalid. Must be between -1 and %d\n", value, size_N); 
                     return;
                 }
                 grid->points[i][j]->value = value;
@@ -208,7 +268,7 @@ void print_possible_points(point* pt) {
         }
     }
     if (printed == 0) {
-        printf("None");
+        printf("None\n");
     }
     printf("\n");
 }

@@ -12,3 +12,5 @@ target_sources(sudoku_solver PUBLIC
         ${CMAKE_CURRENT_LIST_DIR}/src/main.c
         ${CMAKE_CURRENT_LIST_DIR}/src/sudoku_grid.c
         )
+
+target_link_libraries(sudoku_solver m)           # Link the math library

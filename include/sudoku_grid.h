@@ -3,6 +3,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <ctype.h>
+#include <math.h>
 
 #define EMPTY_ENTRY '-'
 #define DEFAULT_SIZE 9
@@ -32,6 +34,7 @@ typedef struct {
 } grid_manager;
 
 grid_manager* create_grid(int size);
+grid_manager* read_grid_from_file(char* filename);
 void destroy_grid(grid_manager* grid);
 
 void input_grid(grid_manager* grid);
