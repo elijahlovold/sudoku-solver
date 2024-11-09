@@ -122,12 +122,12 @@ grid_manager* read_grid_from_file(char* filename) {
         }
 
         if (iter) {
-            i++;
-            if (i >= size_N) {
-                i = 0;
-                j++;
-            }
+            j++;
             if (j >= size_N) {
+                j = 0;
+                i++;
+            }
+            if (i >= size_N) {
                 break;
             }
         }

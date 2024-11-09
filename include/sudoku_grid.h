@@ -30,6 +30,18 @@ typedef struct {
     // point triple pointer called points pointing to pointer pointing to point pointer
     point*** points;
 
+    // all the groups that must contain numbers 1-size_N
+    //
+    // each group is size_N large, thus there must
+    // size_N elements in each group to get size_N^2 
+    // total elements to match number on grid
+    //
+    // this allows us to treat each group identically 
+    // agnostic of the geometric differences
+    point*** rows;
+    point*** cols;
+    point*** cells;
+
     int iteration;
 } grid_manager;
 
