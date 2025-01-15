@@ -19,6 +19,8 @@ typedef struct {
     int num_possible;
 } point;
 
+typedef point* (*PtByCellFunc)(point***, int, int);
+
 point* create_point();
 void destroy_point(point* pt);
 
@@ -29,28 +31,23 @@ typedef struct {
     // 2d array of point pointers because why not
     // point triple pointer called points pointing to pointer pointing to point pointer
     point*** points;
-
-    // all the groups that must contain numbers 1-size_N
-    //
-    // each group is size_N large, thus there must
-    // size_N elements in each group to get size_N^2 
-    // total elements to match number on grid
-    //
-    // this allows us to treat each group identically 
-    // agnostic of the geometric differences
-    point*** rows;
-    point*** cols;
-    point*** cells;
-
     int iteration;
 } grid_manager;
 
+point* pt_by_row(point*** points, int row, int i);
+point* pt_by_col(point*** points, int col, int i);
+point* pt_by_cell(point*** points, int cell, int i);
+
 grid_manager* create_grid(int size);
 grid_manager* read_grid_from_file(char* filename);
+void _init_grid_repr(grid_manager* grid);
 void destroy_grid(grid_manager* grid);
 
 void input_grid(grid_manager* grid);
 void display_grid(grid_manager* grid);
+
+void _update_groups_possible_values(point***, PtByCellFunc accessor);
+int solve_groups(point***, PtByCellFunc accessor);
 
 int compute_missing_numbers(grid_manager* grid);
 int compute_all_possible_points(grid_manager* grid);

@@ -1,3 +1,4 @@
+#include <signal.h>
 #include <sudoku_grid.h>
 
 int size_N;
@@ -40,6 +41,26 @@ void reset_possible_values(point* pt, int value) {
         pt->num_possible = 0;
     }
 };
+
+point* pt_by_row(point*** points, int row, int i) {
+    return points[row][i];
+}
+
+point* pt_by_col(point*** points, int col, int i) {
+    return points[i][col];
+}
+
+point* pt_by_cell(point*** points, int cell, int i) {
+    int cell_size = sqrt(size_N);
+
+    int cell_row = (cell / cell_size) * cell_size;
+    int cell_col = (cell % cell_size) * cell_size;
+
+    int l_row = cell_row + (i / cell_size);
+    int l_col = cell_col + (i % cell_size);
+
+    return points[l_row][l_col];
+}
 
 grid_manager* create_grid(int size) {
     if (size < 2) {
@@ -178,6 +199,8 @@ void input_grid(grid_manager* grid) {
 }
 
 void display_grid(grid_manager* grid) {
+    int num_cells = sqrt(size_N);
+
     printf("Sudoku grid:\n");
     for (int i = 0; i < size_N; i++) {
         for (int j = 0; j < size_N; j++) {
@@ -185,10 +208,21 @@ void display_grid(grid_manager* grid) {
             if (value != -1) {
                 printf("%d ", value);
             } else {
-                printf("- "); // Print non-numeric characters as is
+                printf("* "); // Print non-numeric characters as is
+            }
+            if ((j % 3) == 2 && j != size_N-1) {
+                printf("| ");
             }
         }
         printf("\n");
+
+        if ((i % 3) == 2 && i != size_N-1) {
+            int num_row_el = size_N + num_cells - 1;
+            for (int j = 0; j < num_row_el; j++) {
+                printf("--");
+            }
+            printf("\n");
+        }
     } 
 }
 
@@ -207,13 +241,68 @@ int compute_missing_numbers(grid_manager* grid) {
 };
 
 int compute_all_possible_points(grid_manager* grid) {
-    int num_updated = 0;
+    int solved = 0;
+    _update_groups_possible_values(grid->points, pt_by_row);
+    _update_groups_possible_values(grid->points, pt_by_col);
+    _update_groups_possible_values(grid->points, pt_by_cell);
+
+    solved += solve_groups(grid->points, pt_by_row);
+    solved += solve_groups(grid->points, pt_by_col);
+    solved += solve_groups(grid->points, pt_by_cell);
+
+    return solved;
+}
+
+void _update_groups_possible_values(point*** group, PtByCellFunc accessor) {
     for (int i = 0; i < size_N; i++) {
         for (int j = 0; j < size_N; j++) {
-            num_updated += compute_possible_point(grid, i, j);
+            point* pt = accessor(group, i, j);
+            int v = pt->value;
+
+            // if not -1, value is there, remove from other groups
+            if (v != -1) {
+                for (int k = 0; k < size_N; k++) {
+                    point* up_pt = accessor(group, i, k);
+                    // only update if still possible
+                    if (up_pt->possible_values[v-1]) {
+                        up_pt->possible_values[v-1] = 0;
+                        up_pt->num_possible--;
+                    }
+                }
+            }
         }
     }
-    return num_updated;
+}
+
+int solve_groups(point*** group, PtByCellFunc accessor) {
+    int solved = 0;
+    for (int i = 0; i < size_N; i++) {
+        for (int j = 0; j < size_N; j++) {
+            point* pt = accessor(group, i, j);
+
+            // if not solved and only one possible number...
+            if (pt->value == -1 && pt->num_possible == 1) {
+                int found = 0;
+                for (int k = 0; k < size_N; k++) {
+                    int possible = pt->possible_values[k];
+                    if (possible) {
+                        pt->value = k + 1;
+                        found = 1;
+                        break;
+                    }
+                }
+
+                // this shouldn't be possible
+                if (!found) {
+                    printf("error, %d, %d\n", i, j);
+                    return -1;
+                }
+
+                solved++;
+            }
+        }
+    }
+    return solved;
 }
 
 int compute_possible_point(grid_manager* grid, int x, int y) {
@@ -277,6 +366,7 @@ int iterate_grid(grid_manager* grid) {
     printf("iter: %d\n", grid->iteration);
 
     int num_direct_infer = compute_all_possible_points(grid);
+    printf("num solved: %d\n", num_direct_infer);
     grid->iteration++;
 
     return num_direct_infer;
@@ -288,7 +378,7 @@ int solve_grid(grid_manager* grid) {
     int num_changed;
     do {
         num_changed = iterate_grid(grid);
-    } while(num_changed != 0);
+    } while(num_changed != 0 && grid->iteration < 100000);
 
     // only win if there are no more
     return compute_missing_numbers(grid) == 0;
