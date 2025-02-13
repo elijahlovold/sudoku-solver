@@ -1,11 +1,6 @@
 #ifndef __S_GRID_H__
 #define __S_GRID_H__
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <ctype.h>
-#include <math.h>
-
 #define EMPTY_ENTRY '-'
 #define DEFAULT_SIZE 9
 
@@ -46,6 +41,9 @@ void destroy_grid(grid_manager* grid);
 void input_grid(grid_manager* grid);
 void display_grid(grid_manager* grid);
 
+int verify_grid(grid_manager* grid);
+int verify_group(point*** group, PtByCellFunc accessor);
+
 void _update_groups_possible_values(point***, PtByCellFunc accessor);
 int solve_groups(point***, PtByCellFunc accessor);
 
@@ -61,4 +59,15 @@ int solve_grid(grid_manager* grid);
 #endif
 
 
+// Macro to include code only if DEBUG is defined
+#ifdef DEBUG
+    #define DEBUG_CODE(code) code
+#else
+    #define DEBUG_CODE(code)
+#endif
 
+#ifdef DEBUG
+    #define dprintf(...) printf(__VA_ARGS__)
+#else
+    #define dprintf(...) 
+#endif

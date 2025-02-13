@@ -1,5 +1,5 @@
 #include <sudoku_grid.h>
-
+#include <stdio.h>
 
 int main(int argc, char** argv) {
     grid_manager* grid;
@@ -16,6 +16,12 @@ int main(int argc, char** argv) {
     if (!grid) {
         return 0;
     }
+
+    if (!verify_grid(grid)) {
+        printf("Error, grid is invalid, check for repeated entries.\n");
+        return 0;
+    }
+    printf("grid valid\n");
 
     solve_grid(grid);
 

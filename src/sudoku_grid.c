@@ -1,5 +1,9 @@
-#include <signal.h>
 #include <sudoku_grid.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <ctype.h>
+#include <math.h>
 
 int size_N;
 
@@ -226,6 +230,38 @@ void display_grid(grid_manager* grid) {
     } 
 }
 
+int verify_grid(grid_manager* grid) {
+    if (!verify_group(grid->points, pt_by_row)) return 0;
+    if (!verify_group(grid->points, pt_by_col)) return 0;
+    if (!verify_group(grid->points, pt_by_cell)) return 0;
+    return 1;
+}
+
+int verify_group(point*** group, PtByCellFunc accessor) {
+    int* unique_nums = malloc(sizeof(int)*size_N);
+
+    for (int i = 0; i < size_N; i++) {
+        memset(unique_nums, 0, sizeof(int)*size_N);
+        for (int j = 0; j < size_N; j++) {
+            point* pt = accessor(group, i, j);
+            
+            if (pt->value != -1) {
+                // if already taken return false
+                if (unique_nums[pt->value-1]) {
+                    dprintf("Invalid Entry at: %d at %d x %d\n", pt->value, i, j);
+                    return 0;
+                }
+
+                // else take the point
+                unique_nums[pt->value-1] = 1;
+            }
+        }
+    }
+    dprintf("klajsdf");
+    // if all pass, return true
+    return 1;
+}
+
 int compute_missing_numbers(grid_manager* grid) {
     int num = 0;
     for (int i = 0; i < size_N; i++) {
@@ -294,7 +330,7 @@ int solve_groups(point*** group, PtByCellFunc accessor) {
 
                 // this shouldn't be possible
                 if (!found) {
-                    printf("error, %d, %d\n", i, j);
+                    dprintf("error, %d, %d\n", i, j);
                     return -1;
                 }
 
