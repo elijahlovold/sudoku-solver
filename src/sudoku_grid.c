@@ -115,7 +115,7 @@ grid_manager* read_grid_from_file(char* filename) {
     FILE *file = fopen(filename, "r"); // Open file in read mode
                                                 //
     if (file == NULL) {                      // Check if file opened successfully
-        perror("Error opening file");
+        fprintf(stderr, "Error opening file: %s\n", filename);
         return NULL;
     }
 

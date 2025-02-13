@@ -2,9 +2,20 @@
 
 
 int main(int argc, char** argv) {
-    grid_manager* grid = read_grid_from_file("sudoku_grid.txt");
+    grid_manager* grid;
+    if (argc > 1) {
+        grid = read_grid_from_file(argv[1]);
+    }
+    else {
+        char input[100];
 
-    pt_by_cell(grid->points, 8, 2);
+        printf("Please specify grid file: ");
+        scanf("%99s", input);
+        grid = read_grid_from_file(input);
+    }
+    if (!grid) {
+        return 0;
+    }
 
     solve_grid(grid);
 
